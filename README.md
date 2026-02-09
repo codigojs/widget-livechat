@@ -1,4 +1,4 @@
-# Widget de Chat en Vivo
+# Widget de Chat en Vivo.
 
 Este proyecto es un widget de chat en vivo implementado como un componente web personalizado utilizando React y TypeScript
 
