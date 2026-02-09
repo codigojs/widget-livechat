@@ -1,0 +1,46 @@
+<!-- public/iframe.html -->
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>LiveChat Widget</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: transparent;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module" src="/assets/iframe.js"></script>
+    <script>
+      function getParams() {
+        const params = new URLSearchParams(location.search);
+        return {
+          agent_id: params.get("agent_id") || "",
+          position: params.get("position") || "right",
+          initial_message: params.get("initial_message") || "Hola, ¿En que te puedo ayudar hoy?",
+          title: params.get("title") || "LiveChat",
+          button_color: params.get("button_color") || "#e11d48",
+          submit_text: params.get("submit_text") || "Enviar",
+          button_text_color: params.get("button_text_color") || "#ffffff",
+          avatar_url: params.get("avatar_url") || "",
+          full_screen: params.get("full_screen") === "true",
+          text_color: params.get("text_color") || "#000000",
+          consent_main: params.get("consent_main") === "true",
+          consent_intro_message: params.get("consent_intro_message") || "",
+          consent_url: params.get("consent_url") || "",
+        };
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        const config = getParams();
+        window.LiveChat?.init(config);
+      });
+    </script>
+  </body>
+</html>

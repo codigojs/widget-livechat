@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script id="live-chat-travelbot" src="http://localhost:4173/assets/js/widget.js" type="module"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        LiveChat.init({
+          agent_id: "67ebf795837b7011c6aca1c5",
+          position: "right",
+          initial_message: "Hola, ¿En que te puedo ayudar hoy?"
+        });
+      });
+    </script>
+  </body>
+</html>

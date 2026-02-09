@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TravelBot LiveChat - Guía de Configuración</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/svg+xml" href="/logo-mychabot.png" />
+  </head>
+  <body class="bg-gradient-to-b from-red-50 to-gray-100 min-h-screen">
+    <!-- Header Section -->
+    <header class="bg-red-600 text-white py-6">
+      <div
+        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-4"
+      >
+        <svg
+          class="w-12 h-12"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5v-4a2 2 0 012-2h10a2 2 0 012 2v4h-4M12 4v6"
+          ></path>
+        </svg>
+        <h1 class="text-3xl font-bold">Configuración de TravelBot LiveChat</h1>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <!-- Hero Section -->
+      <section class="bg-white rounded-2xl shadow-lg p-8 mb-12 text-center">
+        <h2 class="text-3xl font-semibold text-gray-800 mb-4">
+          Configura tu LiveChat en Minutos
+        </h2>
+        <p class="text-gray-600 text-lg max-w-2xl mx-auto">
+          Configura el widget de TravelBot LiveChat con facilidad. Personaliza
+          su apariencia, comportamiento e integraciones para mejorar la
+          interacción con los clientes.
+        </p>
+        <a
+          href="#pasos-configuracion"
+          class="mt-6 inline-block bg-red-600 hover:bg-red-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors duration-200"
+        >
+          Comenzar
+        </a>
+      </section>
+
+      <!-- Integration Code Section -->
+      <section class="bg-white rounded-2xl shadow-lg p-8 mb-12">
+        <h3 class="text-2xl font-semibold text-gray-800 mb-4">
+          Código de Integración
+        </h3>
+        <p class="text-gray-600 mb-6">
+          Copia y pega el siguiente código en el &lt;body&gt; de tu sitio web
+          para activar el widget de TravelBot LiveChat.
+        </p>
+        <div class="bg-gray-900 text-white rounded-lg p-4 overflow-x-auto">
+          <pre class="text-sm"><code>
+&lt;script id="live-chat-travelbot" src="https://widget.mychatbot.es/assets/js/widget.js" type="module"&gt;&lt;/script&gt;
+  document.addEventListener("DOMContentLoaded", () => {
+    LiveChat.init({
+      agent_id: "agent-id",
+      position: "right",
+    });
+  });
+&lt;/script&gt;</code></pre>
+        </div>
+        <button
+          class="mt-4 bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2 rounded-lg transition-colors duration-200"
+          onclick="navigator.clipboard.writeText(document.querySelector('pre code').innerText); alert('¡Código copiado al portapapeles!');"
+        >
+          Copiar Código
+        </button>
+      </section>
+
+      <!-- Setup Steps Section -->
+      <section
+        id="pasos-configuracion"
+        class="grid gap-8 md:grid-cols-2 lg:grid-cols-3"
+      >
+        <!-- Step 1 -->
+        <div
+          class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <span
+              class="bg-red-100 text-red-600 font-semibold rounded-full w-10 h-10 flex items-center justify-center"
+              >1</span
+            >
+            <h3 class="text-xl font-semibold text-gray-800">
+              Personalizar Apariencia
+            </h3>
+          </div>
+          <p class="text-gray-600">
+            Elige colores, fuentes y la posición del widget para que coincida
+            con tu marca. Previsualiza los cambios en tiempo real para un ajuste
+            perfecto con tu sitio web.
+          </p>
+        </div>
+
+        <!-- Step 2 -->
+        <div
+          class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <span
+              class="bg-red-100 text-red-600 font-semibold rounded-full w-10 h-10 flex items-center justify-center"
+              >2</span
+            >
+            <h3 class="text-xl font-semibold text-gray-800">
+              Establecer Reglas de Comportamiento
+            </h3>
+          </div>
+          <p class="text-gray-600">
+            Define activadores, como el tiempo en la página o las acciones del
+            usuario, para mostrar el widget de chat. Personaliza saludos y
+            respuestas automáticas para una mayor interacción.
+          </p>
+        </div>
+
+        <!-- Step 3 -->
+        <div
+          class="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <span
+              class="bg-red-100 text-red-600 font-semibold rounded-full w-10 h-10 flex items-center justify-center"
+              >3</span
+            >
+            <h3 class="text-xl font-semibold text-gray-800">
+              Integrar y Publicar
+            </h3>
+          </div>
+          <p class="text-gray-600">
+            Conecta TravelBot con tu CRM, correo electrónico u otras
+            herramientas. Copia el fragmento de código generado y pégalo en tu
+            sitio web para activarlo.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <p>© 2025 TravelBot. Todos los derechos reservados.</p>
+      </div>
+    </footer>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
