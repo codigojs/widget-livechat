@@ -20,7 +20,6 @@ const MAX_MESSAGE_LENGTH = 500; // Máximo de caracteres permitidos
 const MIN_TIME_BETWEEN_MESSAGES_MS = 2000; // 2 segundos entre envíos
 
 // Rate limit monitoring (silent, logs only on errors)
-let trackCallTimestamps: number[] = [];
 const RATE_LIMIT_WINDOW_MS = 1000;
 const RATE_LIMIT_THRESHOLD = 10;
 
@@ -34,11 +33,15 @@ export const SupabaseProvider = ({ children }: SupabaseProviderProps) => {
   const [isTypingHuman, setIsTypingHuman] = useState(false);
   const [awaitingName, setAwaitingName] = useState(false);
   const [pendingMessages, setPendingMessages] = useState<number>(0);
+  const [isHumanSessionActive, setIsHumanSessionActive] = useState(false);
 
   // Ref para rastrear cuántas respuestas de IA esperamos
   // Incrementa cada vez que enviamos un mensaje esperando respuesta
   // Decrementa cada vez que llega una respuesta del asistente
   const pendingResponsesRef = useRef(0);
+
+  // Rate limit tracking - movido de module-level a component ref
+  const trackCallTimestamps = useRef<number[]>([]);
 
   const { closeSession } = useSession();
 
@@ -128,6 +131,77 @@ export const SupabaseProvider = ({ children }: SupabaseProviderProps) => {
           }
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "human_sessions",
+          filter: `session_id=eq.${sessionId}`,
+        },
+        (payload) => {
+          // Actualizar estado cuando cambia el status de human_sessions
+          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+            const newStatus = (payload.new as { status?: string })?.status;
+
+            // Si el status cambió a 'closed', mostrar mensaje y cerrar
+            if (newStatus === "closed") {
+              setIsHumanSessionActive(false);
+
+              // Mostrar mensaje de despedida
+              setMessages((prev) => [
+                ...prev,
+                formatMessage({
+                  role: "assistant",
+                  content: "El agente ha finalizado la conversación. ¡Gracias por contactarnos!",
+                  agent_id: config?.agent_id || "",
+                  session_id: config?.session_id || "",
+                  created_at: new Date().toISOString(),
+                  id: "",
+                }),
+              ]);
+
+              // Delay de 2 segundos para que el usuario lea el mensaje
+              setTimeout(() => {
+                void closeChat().then(() => {
+                  closeSession();
+                  if (config) {
+                    setConfig({ ...config, session_id: '' });
+                  }
+                });
+              }, 2000);
+
+            } else {
+              // Para otros estados (active, etc.)
+              setIsHumanSessionActive(newStatus === "active");
+            }
+          } else if (payload.eventType === "DELETE") {
+            setIsHumanSessionActive(false);
+
+            // Si se elimina el registro, también cerrar con mensaje
+            setMessages((prev) => [
+              ...prev,
+              formatMessage({
+                role: "assistant",
+                content: "La conversación ha finalizado. ¡Gracias por contactarnos!",
+                agent_id: config?.agent_id || "",
+                session_id: config?.session_id || "",
+                created_at: new Date().toISOString(),
+                id: "",
+              }),
+            ]);
+
+            setTimeout(() => {
+              void closeChat().then(() => {
+                closeSession();
+                if (config) {
+                  setConfig({ ...config, session_id: '' });
+                }
+              });
+            }, 2000);
+          }
+        }
+      )
       .on("presence", { event: "sync" }, () => {
         handlePresenceSync(channel);
       })
@@ -151,7 +225,7 @@ export const SupabaseProvider = ({ children }: SupabaseProviderProps) => {
       });
 
     // Set Online User
-    trackCallTimestamps.push(Date.now());
+    trackCallTimestamps.current.push(Date.now());
 
     channel.track({
       online: true,
@@ -216,21 +290,25 @@ export const SupabaseProvider = ({ children }: SupabaseProviderProps) => {
    * Indicador de escritura
    * @param typing
    *
-   * IMPORTANTE: track() REEMPLAZA el estado completo, no lo actualiza parcialmente.
-   * Siempre debemos pasar todas las propiedades (online, typing, online_at).
+   * IMPORTANTE:
+   * - track() REEMPLAZA el estado completo, no lo actualiza parcialmente.
+   * - Solo enviamos typing status cuando hay human session activa
+   * - Durante conversación con bot, typing no tiene propósito funcional
    * Portado de: frontend/src/stores/presenceChatStore.ts (línea 310)
    */
   const setTypingStatus = (typing: boolean) => {
-    if (channelChat) {
+    // Solo enviar typing status si hay human session activa
+    // El bot no necesita saber si el usuario está escribiendo
+    if (channelChat && isHumanSessionActive) {
       // Monitorear rate limit silenciosamente
       const now = Date.now();
-      trackCallTimestamps.push(now);
+      trackCallTimestamps.current.push(now);
 
-      trackCallTimestamps = trackCallTimestamps.filter(
+      trackCallTimestamps.current = trackCallTimestamps.current.filter(
         (timestamp) => now - timestamp < RATE_LIMIT_WINDOW_MS
       );
 
-      const currentRate = trackCallTimestamps.length;
+      const currentRate = trackCallTimestamps.current.length;
 
       // Solo log si superamos el límite (indicador de problema)
       if (currentRate > RATE_LIMIT_THRESHOLD) {
@@ -276,6 +354,8 @@ export const SupabaseProvider = ({ children }: SupabaseProviderProps) => {
         supabase.removeChannel(channelChat);
       }
     }
+    // Limpiar tracking de rate limit
+    trackCallTimestamps.current = [];
     setReadyState(false);
   };
 
@@ -318,6 +398,10 @@ export const SupabaseProvider = ({ children }: SupabaseProviderProps) => {
     pendingResponsesRef.current = 0;
     setChannelChat(null);
     setLastSentAt(0);
+    setIsHumanSessionActive(false);
+
+    // Limpiar tracking de rate limit
+    trackCallTimestamps.current = [];
 
     // 4. Cerrar la sesión de cookies (elimina travelbot_session_id del localStorage)
     await closeSession();
@@ -433,6 +517,8 @@ export const SupabaseProvider = ({ children }: SupabaseProviderProps) => {
       // No activar loading si la sesión está siendo atendida por un agente humano
       if (response.detail === "human_session_active") {
         shouldShowLoading = false;
+        // Activar typing status para human sessions
+        setIsHumanSessionActive(true);
       } else if (response.detail === "ok" && response.response) {
         // Verificar si hay transfer_queued en la respuesta anidada
         try {
@@ -495,17 +581,29 @@ export const SupabaseProvider = ({ children }: SupabaseProviderProps) => {
   };
 
   useEffect(() => {
-    if (!config?.agent_id) return;
+    if (!config?.agent_id || !supabase) return;
 
     const load = async () => {
       if (config.session_id) {
-        // Comprobamos si el agente está activo o tiene permisos para enivar mensajes
+        // 1. Verificar si hay human session activa (para restaurar estado en page reload)
+        const { data: activeSession } = await supabase
+          .from('human_sessions')
+          .select('*')
+          .eq('session_id', config.session_id)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        setIsHumanSessionActive(!!activeSession);
+
+        // 2. Comprobamos si el agente está activo o tiene permisos para enviar mensajes
         const agentData = await isAgentActive(config.agent_id, config.session_id);
 
         if (!agentData) {
           setReadyState(false);
           return;
         }
+
+        // 3. Unir al chat assistant
         joinChatAssistant(config.session_id);
       }
     };
@@ -535,6 +633,8 @@ export const SupabaseProvider = ({ children }: SupabaseProviderProps) => {
         isLoadingMessages,
         setIsLoadingMessages,
         pendingMessages,
+        isHumanSessionActive,
+        setIsHumanSessionActive,
       }}
     >
       {children}

@@ -16,6 +16,8 @@ interface SupabaseContextType {
   closeChat: () => Promise<void>;
   refreshSession: () => Promise<void>;
   pendingMessages: number;
+  isHumanSessionActive: boolean;
+  setIsHumanSessionActive: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const SupabaseContext = createContext<SupabaseContextType | undefined>(undefined);
