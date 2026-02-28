@@ -28,6 +28,19 @@ export interface VectorDbResponse {
   intent?: string;
 }
 
+export interface ChatBackendResponse {
+  session_id: string;
+  response: string;
+  agent_id: string;
+  timestamp: string;
+  metadata?: {
+    tools_available?: number;
+    model?: string;
+    human_session_active?: boolean;
+    [key: string]: any;
+  };
+}
+
 export interface WebsocketMessageData {
   action: string;
   id_recipient: string;

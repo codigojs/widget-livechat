@@ -1,8 +1,8 @@
-import { VectorDbResponse } from "../types/types";
+import { ChatBackendResponse } from "../types/types";
 import { getAuthToken } from "./authService";
 
 /**
- * Consultamos la base de datos vectorial para generar la respuesta
+ * Consultamos el backend de Agentes IA para generar la respuesta
  * @param content
  * @param agentId
  * @param sessionId
@@ -12,14 +12,17 @@ export const chatLiveService = async (
   content: string,
   agentId: string,
   sessionId: string
-): Promise<VectorDbResponse> => {
+): Promise<ChatBackendResponse> => {
   try {
     // Obtener JWT válido de custom-token
     const authTokenResponse = await getAuthToken(sessionId);
     const jwtToken = authTokenResponse.token;
 
+    // Usar la nueva URL del backend de Python/CrewAI
+    const backendUrl = import.meta.env.VITE_AGENT_IA_BACKEND_URL;
+
     const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
+      backendUrl,
       {
         method: "POST",
         headers: {
@@ -27,7 +30,7 @@ export const chatLiveService = async (
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          query: content,
+          message: content,
           agent_id: agentId,
           session_id: sessionId,
         }),
@@ -35,11 +38,13 @@ export const chatLiveService = async (
     );
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.detail || 'Unknown error'}`);
     }
+    
     return await response.json();
   } catch (error) {
-    console.error("Error querying vector database:", error);
+    console.error("Error querying agent backend:", error);
     throw error;
   }
 };
