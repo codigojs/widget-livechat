@@ -504,9 +504,6 @@ export const SupabaseProvider = ({ children }: SupabaseProviderProps) => {
     // por websocket antes que la respuesta de la API
     setPendingMessages((prev) => prev + 1);
 
-    // Determinar si mostramos loading basado en la respuesta de la API
-    let shouldShowLoading = true;
-
     try {
       const response = await chatLiveService(
         content,
@@ -514,49 +511,27 @@ export const SupabaseProvider = ({ children }: SupabaseProviderProps) => {
         config.session_id
       );
 
-      // No activar loading si la sesión está siendo atendida por un agente humano
-      if (response.detail === "human_session_active") {
-        shouldShowLoading = false;
+      // Verificar si hay sesión humana activa en la respuesta
+      const isHumanSessionActive = response.metadata?.human_session_active === true;
+
+      if (isHumanSessionActive) {
         // Activar typing status para human sessions
         setIsHumanSessionActive(true);
-      } else if (response.detail === "ok" && response.response) {
-        // Verificar si hay transfer_queued en la respuesta anidada
-        try {
-          const nestedResponse = JSON.parse(response.response);
 
-          // Buscar transfer_queued en un posible array de contenido
-          if (nestedResponse?.content && Array.isArray(nestedResponse.content)) {
-            const hasTransferQueued = nestedResponse.content.some((item: Record<string, unknown>) =>
-              item?.detail === "transfer_queued" ||
-              item?.type === "transfer_queued"
-            );
-            if (hasTransferQueued) {
-              shouldShowLoading = false;
-            }
-          } else if (nestedResponse?.detail === "transfer_queued") {
-            shouldShowLoading = false;
-          }
-        } catch {
-          // Si el parsing falla, mantener shouldShowLoading = true
+        // Si hay respuesta del agente, procesarla normalmente
+        if (!response.response) {
+          // Sin respuesta del agente (mensaje ya guardado en DB por transfer tool)
+          setIsLoadingMessages(false);
+          setPendingMessages((prev) => Math.max(0, prev - 1));
         }
-      }
-
-      // Actualizar loading y counters basado en la respuesta
-      if (shouldShowLoading) {
-        // Esperamos una respuesta del asistente, incrementar pendingResponses
+      } else if (response.response) {
+        // Tenemos respuesta del agente IA
         pendingResponsesRef.current += 1;
         setIsLoadingMessages(true);
       } else {
-        // No esperamos respuesta, decrementar el contador que se incrementó 
-        // antes de enviar
+        // Sin respuesta ni transfer
         setIsLoadingMessages(false);
         setPendingMessages((prev) => Math.max(0, prev - 1));
-      }
-
-      // Manejar transferencia a agente humano
-      if (response.detail === "transfer_to_human") {
-        joinChatAssistant(config.session_id);
-        setAwaitingName(true);
       }
     } catch (error) {
       console.error(
