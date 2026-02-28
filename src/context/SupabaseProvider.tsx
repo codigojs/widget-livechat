@@ -244,31 +244,18 @@ export const SupabaseProvider = ({ children }: SupabaseProviderProps) => {
     });
     setChannelChat(channel);
 
-    // El agente finaliza el chat
-    channel.on("broadcast", { event: "chat_closed" }, async (payload: { payload: { message: string, user_name: string } } ) => {
+    // El agente finaliza el chat (broadcast notification only, message comes via postgres_changes)
+    channel.on("broadcast", { event: "chat_closed" }, async () => {
       // 0. Detener loading si está activo
       setIsLoadingMessages(false);
 
-      // 1. Agregar mensaje del agente al chat
-      setMessages((prev) => [
-        ...prev,
-        formatMessage({
-          role: "human",
-          content: payload.payload.message,
-          agent_id: config?.agent_id || "",
-          session_id: config?.session_id || "",
-          created_at: new Date().toISOString(),
-          id: "",
-        }),
-      ]);
-
-      // 2. Cerrar canal de forma limpia (hace untrack + removeChannel)
+      // 1. Cerrar canal de forma limpia (hace untrack + removeChannel)
       await closeChat();
 
-      // 3. Cerrar sesión (limpia cookies y localStorage)
+      // 2. Cerrar sesión (limpia cookies y localStorage)
       closeSession();
 
-      // 4. Resetear session_id para permitir nuevo chat
+      // 3. Resetear session_id para permitir nuevo chat
       // Nota: El nombre del agente se actualiza cuando se recibe 'agent_info'
       // en el próximo chat
       if (config) {
@@ -278,10 +265,10 @@ export const SupabaseProvider = ({ children }: SupabaseProviderProps) => {
         });
       }
 
-      // 5. Limpiar estado del canal
+      // 4. Limpiar estado del canal
       setChannelChat(null);
 
-      // 6. Desactivar estado de listo para permitir reinicialización
+      // 5. Desactivar estado de listo para permitir reinicialización
       setReadyState(false);
     });
   };
