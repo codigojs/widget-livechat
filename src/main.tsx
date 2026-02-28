@@ -10,6 +10,7 @@ const renderApp = () => {
 
   // AGENT_ID para desarrollo
   const AGENT_ID = import.meta.env.VITE_TRAVELBOT_AGENT_ID || "f6e4db92-bab8-43a9-866f-89a3c557e850";
+  console.log(AGENT_ID)
 
   createRoot(rootElement).render(
     <StrictMode>
