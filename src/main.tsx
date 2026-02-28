@@ -9,7 +9,7 @@ const renderApp = () => {
   if (!rootElement) throw new Error("Elemento raíz no encontrado");
 
   // AGENT_ID para desarrollo
-  const AGENT_ID = import.meta.env.VITE_TRAVELBOT_AGENT_ID || "1d7d22a3-5597-4f6f-943b-69c7b2c805df";
+  const AGENT_ID = import.meta.env.VITE_TRAVELBOT_AGENT_ID || "f6e4db92-bab8-43a9-866f-89a3c557e850";
 
   createRoot(rootElement).render(
     <StrictMode>
